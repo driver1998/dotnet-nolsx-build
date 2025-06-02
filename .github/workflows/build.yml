@@ -13,6 +13,16 @@ jobs:
   run:
     runs-on: ubuntu-latest
 
+    strategy:
+      matrix:
+        include:
+          - rid: linux-loongarch64
+            container: mcr.microsoft.com/dotnet-buildtools/prereqs:azurelinux-3.0-net10.0-cross-loongarch64
+            osName: linux
+          - rid: linux-musl-loongarch64
+            container: mcr.microsoft.com/dotnet-buildtools/prereqs:azurelinux-3.0-net10.0-cross-loongarch64-musl
+            osName: linux-musl
+
     steps:
 
     - name: Maximize build space
@@ -31,14 +41,14 @@ jobs:
     - name: Build
       run: |
         docker run --platform linux/amd64 --rm -v${{ github.workspace }}/dotnet-nolsx:/dotnet -w /dotnet -e ROOTFS_DIR=/crossrootfs/loongarch64 \
-          mcr.microsoft.com/dotnet-buildtools/prereqs:azurelinux-3.0-net10.0-cross-loongarch64 \
+          ${{ matrix.container }} \
           sh -c '
             pushd src/runtime &&
-            ./build.sh -c Release --cross --arch loongarch64 --os linux &&
+            ./build.sh -c Release --cross --arch loongarch64 --os ${{ matrix.osName }} &&
             popd &&
             pushd src/aspnetcore &&
             sed -i "s|\$(BaseIntermediateOutputPath)\$(DotNetRuntimeArchiveFileName)|/dotnet/src/runtime/artifacts/packages/Release/Shipping/\$(DotNetRuntimeArchiveFileName)|" src/Framework/App.Runtime/src/Microsoft.AspNetCore.App.Runtime.csproj && 
-            ./eng/build.sh --pack --ci -c Release -arch loongarch64
+            ./eng/build.sh --pack --ci -c Release -arch loongarch64 --os-name ${{ matrix.osName }}
           '
 
     - name: List assets directory
@@ -51,7 +61,7 @@ jobs:
     - name: Upload .NET
       uses: actions/upload-artifact@v4
       with:
-        name: dotnet-sdk-linux-loongarch64
+        name: dotnet-sdk-${{ matrix.rid }}
         path: |
           ${{ github.workspace }}/dotnet-nolsx/src/runtime/artifacts/packages/Release/Shipping/*
           ${{ github.workspace }}/dotnet-nolsx/src/runtime/artifacts/packages/Release/NonShipping/*
