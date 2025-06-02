@@ -37,6 +37,7 @@ jobs:
             ./build.sh -c Release --cross --arch loongarch64 --os linux &&
             popd &&
             pushd src/aspnetcore &&
+            sed -i "s|\$(BaseIntermediateOutputPath)\$(DotNetRuntimeArchiveFileName)|/dotnet/src/runtime/artifacts/packages/Release/Shipping/dotnet-runtime-9.0.3-linux-loongarch64.tar.gz|" src/Framework/App.Runtime/src/Microsoft.AspNetCore.App.Runtime.csproj && 
             ./eng/build.sh --pack --ci -c Release -arch loongarch64
           '
 
