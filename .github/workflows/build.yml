@@ -37,7 +37,7 @@ jobs:
             ./build.sh -c Release --cross --arch loongarch64 --os linux &&
             popd &&
             pushd src/aspnetcore &&
-            ./eng/build.sh --pack -c Release -arch loongarch64
+            ./eng/build.sh --pack --ci -c Release -arch loongarch64
           '
 
     - name: List assets directory
