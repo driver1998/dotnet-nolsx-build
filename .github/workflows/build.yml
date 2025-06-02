@@ -15,14 +15,14 @@ jobs:
 
     steps:
 
-    - name: Maximize build space
-      uses: AdityaGarg8/remove-unwanted-software@v4.1
-      with:
-        remove-dotnet: 'true'
-        remove-android: 'true'
-        remove-haskell: 'true'
-        remove-codeql: 'true'
-        remove-cached-tools: 'true'        
+    # - name: Maximize build space
+    #   uses: AdityaGarg8/remove-unwanted-software@v4.1
+    #   with:
+    #     remove-dotnet: 'true'
+    #     remove-android: 'true'
+    #     remove-haskell: 'true'
+    #     remove-codeql: 'true'
+    #     remove-cached-tools: 'true'        
 
     - name: Clone repository
       run: |
@@ -34,7 +34,7 @@ jobs:
           mcr.microsoft.com/dotnet-buildtools/prereqs:azurelinux-3.0-net10.0-cross-loongarch64 \
           sh -c '
             pushd src/runtime &&
-            ./build.sh -c Release --cross --arch riscv64 --os linux-musl &&
+            ./build.sh -c Release --cross --arch loongarch64 --os linux-musl &&
             popd &&
             pushd src/aspnetcore &&
             ./eng/build.sh --pack -c Release -arch loongarch64
@@ -42,12 +42,12 @@ jobs:
 
     - name: List assets directory
       run: |
-        find "${{ github.workspace }}/dotnet/artifacts"
+        find "${{ github.workspace }}/dotnet/src/runtime/artifacts"
 
     - name: Upload .NET
       uses: actions/upload-artifact@v4
       with:
-        name: dotnet-sdk-linux-riscv64
+        name: dotnet-sdk-linux-loongarch64
         path: |
-          ${{ github.workspace }}/dotnet/artifacts/assets/Release/Sdk/*/dotnet-sdk-*
-          ${{ github.workspace }}/dotnet/artifacts/packages/Release/Shipping/runtime/Microsoft.NETCore.App.Crossgen2.linux-loongarch64.*.nupkg
+          ${{ github.workspace }}/dotnet/src/runtime/artifacts/assets/Release/Sdk/*/dotnet-sdk-*
+          ${{ github.workspace }}/dotnet/src/runtime/artifacts/packages/Release/Shipping/runtime/Microsoft.NETCore.App.Crossgen2.linux-loongarch64.*.nupkg
