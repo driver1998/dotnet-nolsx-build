@@ -34,7 +34,7 @@ jobs:
           mcr.microsoft.com/dotnet-buildtools/prereqs:azurelinux-3.0-net10.0-cross-loongarch64 \
           sh -c '
             ./prep-source-build.sh &&
-            ./build.sh --clean-while-building -sb --os linux --arch loongarch64 -p:DisableDevBuildAsDefaultForSourceOnly=true
+            ./build.sh -sb --clean-while-building /p:TargetOS=linux /p:TargetArchitecture=loongarch64 /p:Crossbuild=true
           '
 
     - name: List assets directory
