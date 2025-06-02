@@ -37,18 +37,24 @@ jobs:
             ./build.sh -c Release --cross --arch loongarch64 --os linux &&
             popd &&
             pushd src/aspnetcore &&
-            sed -i "s|\$(BaseIntermediateOutputPath)\$(DotNetRuntimeArchiveFileName)|/dotnet/src/runtime/artifacts/packages/Release/Shipping/dotnet-runtime-9.0.3-linux-loongarch64.tar.gz|" src/Framework/App.Runtime/src/Microsoft.AspNetCore.App.Runtime.csproj && 
+            sed -i "s|\$(BaseIntermediateOutputPath)\$(DotNetRuntimeArchiveFileName)|/dotnet/src/runtime/artifacts/packages/Release/Shipping/\$(DotNetRuntimeArchiveFileName)|" src/Framework/App.Runtime/src/Microsoft.AspNetCore.App.Runtime.csproj && 
             ./eng/build.sh --pack --ci -c Release -arch loongarch64
           '
 
     - name: List assets directory
       run: |
-        find "${{ github.workspace }}/dotnet/src/runtime/artifacts"
+        find "${{ github.workspace }}/dotnet-nolsx/src/runtime/artifacts/packages/Release/NonShipping/"
+        find "${{ github.workspace }}/dotnet-nolsx/src/runtime/artifacts/packages/Release/Shipping/"
+        find "${{ github.workspace }}/dotnet-nolsx/src/aspnetcore/artifacts/packages/Release/NonShipping/"
+        find "${{ github.workspace }}/dotnet-nolsx/src/aspnetcore/artifacts/packages/Release/Shipping/"
 
     - name: Upload .NET
       uses: actions/upload-artifact@v4
       with:
         name: dotnet-sdk-linux-loongarch64
         path: |
-          ${{ github.workspace }}/dotnet/src/runtime/artifacts/assets/Release/Sdk/*/dotnet-sdk-*
-          ${{ github.workspace }}/dotnet/src/runtime/artifacts/packages/Release/Shipping/runtime/Microsoft.NETCore.App.Crossgen2.linux-loongarch64.*.nupkg
+          ${{ github.workspace }}/dotnet-nolsx/src/runtime/artifacts/packages/Release/Shipping/*
+          ${{ github.workspace }}/dotnet-nolsx/src/runtime/artifacts/packages/Release/NonShipping/*
+          ${{ github.workspace }}/dotnet-nolsx/src/aspnetcore/artifacts/packages/Release/Shipping/*
+          ${{ github.workspace }}/dotnet-nolsx/src/aspnetcore/artifacts/packages/Release/NonShipping/*
+
