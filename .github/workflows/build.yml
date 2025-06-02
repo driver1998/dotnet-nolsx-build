@@ -34,7 +34,11 @@ jobs:
           mcr.microsoft.com/dotnet-buildtools/prereqs:azurelinux-3.0-net10.0-cross-loongarch64 \
           sh -c '
             ./prep-source-build.sh &&
-            ./build.sh -sb --clean-while-building /p:TargetOS=linux /p:TargetArchitecture=loongarch64 /p:Crossbuild=true
+            pushd src/runtime &&
+            ./build.sh -c Release --cross --arch riscv64 --os linux-musl &&
+            popd &&
+            pushd src/aspnetcore &&
+            ./eng/build.sh --pack -c Release -arch loongarch64
           '
 
     - name: List assets directory
