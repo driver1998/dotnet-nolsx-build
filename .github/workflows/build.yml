@@ -65,8 +65,8 @@ jobs:
 
             # Build .NET SDK
             pushd src/sdk
-            sed -i s"|<clear />|<clear />\n<add key='runtime-local' value='/dotnet/src/runtime/artifacts/packages/Release/Shipping/' />|" NuGet.config
-            sed -i s"|<clear />|<clear />\n<add key='aspnetcore-local' value='/dotnet/src/aspnetcore/artifacts/packages/Release/Shipping/' />|" NuGet.config
+            sed -i s"|<clear />|<clear />\n<add key=\"runtime-local\" value=\"/dotnet/src/runtime/artifacts/packages/Release/Shipping/\" />|" NuGet.config
+            sed -i s"|<clear />|<clear />\n<add key=\"aspnetcore-local\" value=\"/dotnet/src/aspnetcore/artifacts/packages/Release/Shipping\" />|" NuGet.config
             ./build.sh --pack --ci -c Release --warnAsError false /p:Architecture=loongarch64 /p:Version=${SDK_VERSION} /p:PublicBaseURL=file:///dotnet/artifacts/ /p:HostOSName=${{ matrix.osName }} /p:DISABLE_CROSSGEN=true
             popd
           '
