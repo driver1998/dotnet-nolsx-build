@@ -10,7 +10,7 @@ on:
         default: main-9.x-loong
 
 jobs:
-  run:
+  build-dotnet:
     runs-on: ubuntu-latest
 
     strategy:
@@ -22,9 +22,13 @@ jobs:
           - rid: linux-musl-loongarch64
             container: mcr.microsoft.com/dotnet-buildtools/prereqs:azurelinux-3.0-net10.0-cross-loongarch64-musl
             osName: linux-musl
+            
+    env:      
+      RUNTIME_VERSION: 9.0.3-servicing.25111.13
+      ASPNETCORE_VERSION: 9.0.3-servicing.25112.20
+      SDK_VERSION: 9.0.201
 
     steps:
-
     - name: Maximize build space
       uses: AdityaGarg8/remove-unwanted-software@v4.1
       with:
@@ -43,12 +47,28 @@ jobs:
         docker run --platform linux/amd64 --rm -v${{ github.workspace }}/dotnet-nolsx:/dotnet -w /dotnet -e ROOTFS_DIR=/crossrootfs/loongarch64 \
           ${{ matrix.container }} \
           sh -c '
-            pushd src/runtime &&
-            ./build.sh -c Release --cross --arch loongarch64 --os ${{ matrix.osName }} &&
-            popd &&
-            pushd src/aspnetcore &&
-            sed -i "s|\$(BaseIntermediateOutputPath)\$(DotNetRuntimeArchiveFileName)|/dotnet/src/runtime/artifacts/packages/Release/Shipping/\$(DotNetRuntimeArchiveFileName)|" src/Framework/App.Runtime/src/Microsoft.AspNetCore.App.Runtime.csproj && 
+            mkdir -p artifacts/Runtime/${{ RUNTIME_VERSION }}
+            mkdir -p artifacts/aspnetcore/Runtime/${{ ASPNETCORE_VERSION }}
+            
+            # Build Runtime
+            pushd src/runtime
+            ./build.sh -c Release --cross --arch loongarch64 --os ${{ matrix.osName }}
+            cp artifacts/packages/Release/Shipping/*.tar.gz ../../artifacts/Runtime/${{ RUNTIME_VERSION }}
+            popd
+            
+            # Build ASP.NET Core
+            pushd src/aspnetcore
+            sed -i "s|\$(BaseIntermediateOutputPath)\$(DotNetRuntimeArchiveFileName)|/dotnet/src/runtime/artifacts/packages/Release/Shipping/\$(DotNetRuntimeArchiveFileName)|" src/Framework/App.Runtime/src/Microsoft.AspNetCore.App.Runtime.csproj
             ./eng/build.sh --pack --ci -c Release -arch loongarch64 --os-name ${{ matrix.osName }}
+            cp artifacts/installers/Release/* ../../artifacts/aspnetcore/Runtime/${{ ASPNETCORE_VERSION }}
+            popd
+
+            # Build .NET SDK
+            pushd src/sdk
+            sed -i s"|<clear />|<clear />\n<add key='runtime-local' value='/dotnet/src/runtime/artifacts/packages/Release/Shipping/' />|" NuGet.config
+            sed -i s"|<clear />|<clear />\n<add key='aspnetcore-local' value='/dotnet/src/aspnetcore/artifacts/packages/Release/Shipping/' />|" NuGet.config
+            ./build.sh --pack --ci -c Release --warnAsError false /p:Architecture=loongarch64 /p:Version=${{ SDK_VERSION }} /p:PublicBaseURL=file:///dotnet/artifacts/ /p:HostOSName=${{ matrix.osName }} /p:DISABLE_CROSSGEN=true
+            popd
           '
 
     - name: List assets directory
@@ -57,14 +77,23 @@ jobs:
         find "${{ github.workspace }}/dotnet-nolsx/src/runtime/artifacts/packages/Release/Shipping/"
         find "${{ github.workspace }}/dotnet-nolsx/src/aspnetcore/artifacts/packages/Release/NonShipping/"
         find "${{ github.workspace }}/dotnet-nolsx/src/aspnetcore/artifacts/packages/Release/Shipping/"
+        find "${{ github.workspace }}/dotnet-nolsx/src/sdk/artifacts/packages/Release/Shipping/"
+        find "${{ github.workspace }}/dotnet-nolsx/src/sdk/artifacts/packages/Release/NonShipping/"
 
-    - name: Upload .NET
+    - name: Upload .NET Runtime Artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: dotnet-sdk-${{ matrix.rid }}
+        name: dotnet-artifacts-${{ matrix.rid }}
         path: |
           ${{ github.workspace }}/dotnet-nolsx/src/runtime/artifacts/packages/Release/Shipping/*
           ${{ github.workspace }}/dotnet-nolsx/src/runtime/artifacts/packages/Release/NonShipping/*
           ${{ github.workspace }}/dotnet-nolsx/src/aspnetcore/artifacts/packages/Release/Shipping/*
           ${{ github.workspace }}/dotnet-nolsx/src/aspnetcore/artifacts/packages/Release/NonShipping/*
+          
+    - name: Upload .NET SDK
+      uses: actions/upload-artifact@v4
+      with:
+        name: dotnet-sdk-${{ matrix.rid }}
+        files: |
+          ${{ github.workspace }}/dotnet-nolsx/src/sdk/artifacts/packages/Release/Shipping/dotnet-sdk-*.tar.gz*
 
