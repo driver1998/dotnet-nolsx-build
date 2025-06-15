@@ -26,7 +26,7 @@ jobs:
     env:      
       RUNTIME_VERSION: 9.0.3-servicing.25111.13
       ASPNETCORE_VERSION: 9.0.3-servicing.25112.20
-      SDK_VERSION: 9.0.201
+      SDK_VERSION: '9.0.201'
 
     steps:
     - name: Maximize build space
@@ -52,14 +52,14 @@ jobs:
             
             # Build Runtime
             pushd src/runtime
-            ./build.sh -c Release --cross --arch loongarch64 --os ${{ matrix.osName }}
+            ./build.sh -c Release --cross --arch loongarch64 --os ${{ matrix.osName }} || exit 1
             cp artifacts/packages/Release/Shipping/*.tar.gz ../../artifacts/Runtime/${RUNTIME_VERSION}
             popd
             
             # Build ASP.NET Core
             pushd src/aspnetcore
             sed -i "s|\$(BaseIntermediateOutputPath)\$(DotNetRuntimeArchiveFileName)|/dotnet/src/runtime/artifacts/packages/Release/Shipping/\$(DotNetRuntimeArchiveFileName)|" src/Framework/App.Runtime/src/Microsoft.AspNetCore.App.Runtime.csproj
-            ./eng/build.sh --pack --ci -c Release -arch loongarch64 --os-name ${{ matrix.osName }}
+            ./eng/build.sh --pack --ci -c Release -arch loongarch64 --os-name ${{ matrix.osName }} || exit 1
             cp artifacts/installers/Release/* ../../artifacts/aspnetcore/Runtime/${ASPNETCORE_VERSION}
             popd
 
@@ -67,7 +67,7 @@ jobs:
             pushd src/sdk
             sed -i s"|<clear />|<clear />\n<add key=\"runtime-local\" value=\"/dotnet/src/runtime/artifacts/packages/Release/Shipping/\" />|" NuGet.config
             sed -i s"|<clear />|<clear />\n<add key=\"aspnetcore-local\" value=\"/dotnet/src/aspnetcore/artifacts/packages/Release/Shipping\" />|" NuGet.config
-            ./build.sh --pack --ci -c Release --warnAsError false /p:Architecture=loongarch64 /p:Version=${SDK_VERSION} /p:PublicBaseURL=file:///dotnet/artifacts/ /p:HostOSName=${{ matrix.osName }} /p:DISABLE_CROSSGEN=true
+            ./build.sh --pack --ci -c Release --warnAsError false /p:Architecture=loongarch64 /p:Version=${SDK_VERSION} /p:PublicBaseURL=file:///dotnet/artifacts/ /p:HostOSName=${{ matrix.osName }} /p:DISABLE_CROSSGEN=true || exit 1
             popd
           '
 
