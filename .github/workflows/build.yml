@@ -41,7 +41,7 @@ jobs:
     - name: Clone repository
       run: |
         cd /mnt/
-        git clone --depth 1 -b ${{ inputs.branch }} https://github.com/driver1998/dotnet-nolsx
+        sudo git clone --depth 1 -b ${{ inputs.branch }} https://github.com/driver1998/dotnet-nolsx
 
     - name: Build
       run: |
