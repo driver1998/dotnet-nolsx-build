@@ -29,22 +29,23 @@ jobs:
       SDK_VERSION: 9.0.201
 
     steps:
-    - name: Maximize build space
-      uses: AdityaGarg8/remove-unwanted-software@v4.1
-      with:
-        remove-dotnet: 'true'
-        remove-android: 'true'
-        remove-haskell: 'true'
-        remove-codeql: 'true'
-        remove-cached-tools: 'true'        
+    # - name: Maximize build space
+    #   uses: AdityaGarg8/remove-unwanted-software@v4.1
+    #   with:
+    #     remove-dotnet: 'true'
+    #     remove-android: 'true'
+    #     remove-haskell: 'true'
+    #     remove-codeql: 'true'
+    #     remove-cached-tools: 'true'        
 
     - name: Clone repository
       run: |
+        cd /mnt/
         git clone --depth 1 -b ${{ inputs.branch }} https://github.com/driver1998/dotnet-nolsx
 
     - name: Build
       run: |
-        docker run --platform linux/amd64 --rm -v${{ github.workspace }}/dotnet-nolsx:/dotnet -w /dotnet \
+        docker run --platform linux/amd64 --rm -v/mnt/dotnet-nolsx:/dotnet -w /dotnet \
           -e ROOTFS_DIR=/crossrootfs/loongarch64 -e SDK_VERSION=${SDK_VERSION} -e RUNTIME_VERSION=${RUNTIME_VERSION} -e ASPNETCORE_VERSION=${ASPNETCORE_VERSION} \
           ${{ matrix.container }} \
           sh -c '
@@ -75,27 +76,27 @@ jobs:
 
     - name: List assets directory
       run: |
-        find "${{ github.workspace }}/dotnet-nolsx/src/runtime/artifacts/packages/Release/NonShipping/"
-        find "${{ github.workspace }}/dotnet-nolsx/src/runtime/artifacts/packages/Release/Shipping/"
-        find "${{ github.workspace }}/dotnet-nolsx/src/aspnetcore/artifacts/packages/Release/NonShipping/"
-        find "${{ github.workspace }}/dotnet-nolsx/src/aspnetcore/artifacts/packages/Release/Shipping/"
-        find "${{ github.workspace }}/dotnet-nolsx/src/sdk/artifacts/packages/Release/Shipping/"
-        find "${{ github.workspace }}/dotnet-nolsx/src/sdk/artifacts/packages/Release/NonShipping/"
+        find "/mnt/dotnet-nolsx/src/runtime/artifacts/packages/Release/NonShipping/"
+        find "/mnt/dotnet-nolsx/src/runtime/artifacts/packages/Release/Shipping/"
+        find "/mnt/dotnet-nolsx/src/aspnetcore/artifacts/packages/Release/NonShipping/"
+        find "/mnt/dotnet-nolsx/src/aspnetcore/artifacts/packages/Release/Shipping/"
+        find "/mnt/dotnet-nolsx/src/sdk/artifacts/packages/Release/Shipping/"
+        find "/mnt/dotnet-nolsx/src/sdk/artifacts/packages/Release/NonShipping/"
 
     - name: Upload .NET Runtime Artifacts
       uses: actions/upload-artifact@v4
       with:
         name: dotnet-artifacts-${{ matrix.rid }}
         path: |
-          ${{ github.workspace }}/dotnet-nolsx/src/runtime/artifacts/packages/Release/Shipping/*
-          ${{ github.workspace }}/dotnet-nolsx/src/runtime/artifacts/packages/Release/NonShipping/*
-          ${{ github.workspace }}/dotnet-nolsx/src/aspnetcore/artifacts/packages/Release/Shipping/*
-          ${{ github.workspace }}/dotnet-nolsx/src/aspnetcore/artifacts/packages/Release/NonShipping/*
+          /mnt/dotnet-nolsx/src/runtime/artifacts/packages/Release/Shipping/*
+          /mnt/dotnet-nolsx/src/runtime/artifacts/packages/Release/NonShipping/*
+          /mnt/dotnet-nolsx/src/aspnetcore/artifacts/packages/Release/Shipping/*
+          /mnt/dotnet-nolsx/src/aspnetcore/artifacts/packages/Release/NonShipping/*
           
     - name: Upload .NET SDK
       uses: actions/upload-artifact@v4
       with:
         name: dotnet-sdk-${{ matrix.rid }}
         files: |
-          ${{ github.workspace }}/dotnet-nolsx/src/sdk/artifacts/packages/Release/Shipping/dotnet-sdk-*.tar.gz*
+          /mnt/dotnet-nolsx/src/sdk/artifacts/packages/Release/Shipping/dotnet-sdk-*.tar.gz*
 
