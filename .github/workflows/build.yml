@@ -97,6 +97,6 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: dotnet-sdk-${{ matrix.rid }}
-        files: |
+        path: |
           /mnt/dotnet-nolsx/src/sdk/artifacts/packages/Release/Shipping/dotnet-sdk-*.tar.gz*
 
